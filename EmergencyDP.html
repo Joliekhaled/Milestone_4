@@ -26,15 +26,16 @@
   <h1>Emergency Appointment 🚨</h1>
   <p>If you are experiencing strong pain, bleeding, broken teeth, or swelling — please book an immediate emergency appointment.</p>
 
-  <form class="emergency-form">
+  <form class="emergency-form" id="emergencyForm">
     <label>Your Name:</label>
-    <input type="text" required>
+    <input type="text" id="emergencyName" required>
 
     <label>Phone Number:</label>
-    <input type="tel" required>
+    <input type="tel" id="emergencyPhone" required>
 
     <label>Type of Emergency:</label>
-    <select required>
+    <select id="emergencyType" required>
+      <option value="">Select Emergency Type</option>
       <option>Severe Tooth Pain</option>
       <option>Bleeding</option>
       <option>Broken Tooth</option>
@@ -43,12 +44,131 @@
     </select>
 
     <label>Describe your issue:</label>
-    <textarea rows="4"></textarea>
+    <textarea id="emergencyDescription" rows="4" required></textarea>
 
-    <button type="submit" class="emergency-submit">Request Immediate Care 🚑</button>
+    <button type="submit" class="emergency-submit" id="emergencySubmit">Request Immediate Care 🚑</button>
+    <p id="emergencyMsg" style="margin-top: 15px; text-align: center; font-weight: bold;"></p>
   </form>
 </section>
 
+<script>
+const API_URL = 'http://localhost:3000/api';
+let doctorsData = [];
+let selectedServiceId = null;
+
+// Get service ID from URL parameter
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+// Load selected service from URL
+async function loadSelectedService() {
+  const serviceId = getUrlParameter('service');
+  if (serviceId) {
+    selectedServiceId = serviceId;
+  }
+}
+
+// Load doctors for emergency appointments
+async function loadDoctors() {
+  try {
+    const response = await fetch(`${API_URL}/doctors`);
+    const result = await response.json();
+    
+    if (result.success && result.data.doctors) {
+      doctorsData = result.data.doctors;
+    }
+  } catch (error) {
+    console.error('Error loading doctors:', error);
+  }
+}
+
+// Handle emergency form submission
+document.getElementById('emergencyForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('emergencyName').value;
+  const phone = document.getElementById('emergencyPhone').value;
+  const emergencyType = document.getElementById('emergencyType').value;
+  const description = document.getElementById('emergencyDescription').value;
+  const msgElement = document.getElementById('emergencyMsg');
+  const submitBtn = document.getElementById('emergencySubmit');
+
+  if (!name || !phone || !emergencyType || !description) {
+    msgElement.textContent = 'Please fill all fields!';
+    msgElement.style.color = 'red';
+    return;
+  }
+
+  // Get first available doctor (or you can let them select)
+  const doctor = doctorsData.length > 0 ? doctorsData[0] : null;
+  
+  if (!doctor) {
+    msgElement.textContent = 'No doctors available. Please call the clinic directly.';
+    msgElement.style.color = 'red';
+    return;
+  }
+
+  // Set appointment for today/tomorrow
+  const today = new Date();
+  today.setHours(12, 0, 0, 0); // Set to noon today
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+  msgElement.textContent = '';
+  msgElement.style.color = 'green';
+
+  try {
+    const appointmentData = {
+      doctor: doctor._id,
+      date: today.toISOString().split('T')[0],
+      time: '12:00', // Emergency time
+      patientName: name,
+      patientPhone: phone,
+      type: 'emergency',
+      emergencyType: emergencyType,
+      emergencyDescription: description,
+      status: 'pending'
+    };
+
+    // Include service if one was selected
+    if (selectedServiceId) {
+      appointmentData.service = selectedServiceId;
+    }
+
+    const response = await fetch(`${API_URL}/appointments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appointmentData)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      msgElement.textContent = `✅ Emergency appointment requested!\n\nWe will contact you at ${phone} shortly.\nAppointment ID: ${result.data.appointment._id}`;
+      msgElement.style.color = 'green';
+      
+      // Clear form
+      document.getElementById('emergencyForm').reset();
+    } else {
+      msgElement.textContent = `❌ Error: ${result.message || 'Failed to submit emergency request'}`;
+      msgElement.style.color = 'red';
+    }
+  } catch (error) {
+    console.error('Emergency submission error:', error);
+    msgElement.textContent = '❌ Error submitting request. Please call the clinic directly at (02) 1234-5678';
+    msgElement.style.color = 'red';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Request Immediate Care 🚑';
+  }
+});
+
+// Load doctors and selected service when page loads
+loadDoctors();
+loadSelectedService();
+</script>
 <script src="navActive.js"></script>
 <script src="inject-chatbot.js"></script>
 

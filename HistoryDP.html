@@ -7,6 +7,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clinic History</title>
   <link rel="stylesheet" href="DentalProject.css">
+  <style>
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #000;
+    }
+    .modal-content label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .modal-content input,
+    .modal-content select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-edit {
+      background: #2ec4b6;
+      color: white;
+    }
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-save {
+      background: #10b981;
+      color: white;
+    }
+    .btn-cancel {
+      background: #6b7280;
+      color: white;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .action-buttons button {
+      padding: 5px 15px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
 
@@ -48,7 +124,8 @@
         <th>Date</th>
         <th>Doctor</th>
         <th>Service</th>
-        <th>Notes</th>
+        <th>Status</th>
+        <th>Actions</th>
       </tr>
       <tr>
         <td>Jan 14, 2025</td>
@@ -74,33 +151,453 @@
     <button class="logout-btn" onclick="logout()">Log Out ↩️</button>
   </div>
 
+  <!-- Edit Appointment Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeEditModal()">&times;</span>
+      <h2>Edit Appointment</h2>
+      <form id="editForm">
+        <label for="editDate">Date:</label>
+        <input type="date" id="editDate" required>
+
+        <label for="editTime">Time:</label>
+        <select id="editTime" required>
+          <option value="">Select Time</option>
+        </select>
+
+        <label for="editDoctor">Doctor:</label>
+        <select id="editDoctor" required>
+          <option value="">Select Doctor</option>
+        </select>
+
+        <label for="editService">Service:</label>
+        <select id="editService">
+          <option value="">Select Service (Optional)</option>
+        </select>
+
+        <label for="editStatus">Status:</label>
+        <select id="editStatus">
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <label for="editNotes">Notes:</label>
+        <input type="text" id="editNotes" placeholder="Optional notes">
+
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn-save">Save Changes</button>
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>
 
 
 <script>
-// --- SIMPLE DEMO LOGIN SYSTEM ---
-function login() {
-  let user = document.getElementById("username").value;
-  let pass = document.getElementById("password").value;
-  let error = document.getElementById("error-msg");
+const API_URL = 'http://localhost:3000/api';
+let currentToken = null;
+let currentUserId = null;
+let doctorsData = [];
+let servicesData = [];
+let currentAppointmentId = null;
 
-  if (user === "" || pass === "") {
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('authToken');
+  currentToken = token;
+  if (token) {
+    // Try to get current user and load history
+    loadPatientHistory(token);
+  }
+  // Load doctors and services for edit form
+  loadDoctorsAndServices();
+});
+
+async function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const error = document.getElementById("error-msg");
+
+  if (username === "" || password === "") {
     error.innerHTML = "Please enter both fields.";
     return;
   }
 
-  // Demo login (you can upgrade later)
-  if (user === "smile" && pass === "1234") {
-    document.querySelector(".history-login-box").classList.add("hidden");
-    document.getElementById("history-section").classList.remove("hidden");
-  } else {
-    error.innerHTML = "Incorrect username or password.";
+  // Try login with username as email (or use username@smileclinic.com)
+  const email = username.includes('@') ? username : username + '@smileclinic.com';
+
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    const result = await response.json();
+
+    if (result.success && result.data.token) {
+      // Save token
+      currentToken = result.data.token;
+      currentUserId = result.data.user.id;
+      localStorage.setItem('authToken', currentToken);
+      localStorage.setItem('userId', currentUserId);
+      
+      // Hide login box and show history
+      document.querySelector(".history-login-box").classList.add("hidden");
+      document.getElementById("history-section").classList.remove("hidden");
+      
+      // Load patient history
+      loadPatientHistory(currentToken, currentUserId);
+    } else {
+      error.innerHTML = result.message || "Incorrect username or password.";
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    document.getElementById("error-msg").innerHTML = "Error connecting to server. Please try again.";
+  }
+}
+
+async function loadPatientHistory(token, userId = null) {
+  if (!userId) {
+    // Get current user first
+    try {
+      const userResponse = await fetch(`${API_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const userData = await userResponse.json();
+      if (userData.success) {
+        userId = userData.data.user.id;
+      }
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return;
+    }
+  }
+
+  if (!userId) {
+    document.getElementById("error-msg").innerHTML = "Could not load user information.";
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/users/${userId}/appointments`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      displayAppointments(result.data.appointments);
+      
+      // Show history section
+      document.querySelector(".history-login-box").classList.add("hidden");
+      document.getElementById("history-section").classList.remove("hidden");
+    } else {
+      document.getElementById("error-msg").innerHTML = result.message || "Error loading history.";
+    }
+  } catch (error) {
+    console.error('Error loading history:', error);
+    document.getElementById("error-msg").innerHTML = "Error loading appointment history.";
+  }
+}
+
+function displayAppointments(appointments) {
+  const table = document.querySelector('.history-table');
+  
+  // Clear existing rows (except header)
+  const headerRow = table.querySelector('tr');
+  table.innerHTML = '';
+  table.appendChild(headerRow);
+
+  if (appointments.length === 0) {
+    const row = table.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 5;
+    cell.textContent = 'No appointments found.';
+    cell.style.textAlign = 'center';
+    cell.style.padding = '20px';
+    return;
+  }
+
+  appointments.forEach(appointment => {
+    const row = table.insertRow();
+    
+    // Format date
+    const date = new Date(appointment.date);
+    const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    
+    // Format time
+    const timeStr = appointment.time || '';
+    
+    // Get doctor name and ID
+    let doctorName = 'N/A';
+    let doctorId = null;
+    if (appointment.doctor) {
+      if (typeof appointment.doctor === 'object') {
+        doctorName = appointment.doctor.name;
+        doctorId = appointment.doctor._id || appointment.doctor.id;
+      } else {
+        doctorName = appointment.doctor;
+      }
+    }
+    
+    // Get service name
+    let serviceName = 'General';
+    if (appointment.service) {
+      if (typeof appointment.service === 'object' && appointment.service.name) {
+        serviceName = appointment.service.name;
+      } else if (typeof appointment.service === 'string') {
+        serviceName = 'Service';
+      }
+    }
+    
+    // Get status
+    const status = appointment.status || 'pending';
+    const statusColors = {
+      'pending': '#f59e0b',
+      'confirmed': '#10b981',
+      'completed': '#6366f1',
+      'cancelled': '#ef4444'
+    };
+    
+    // Date cell
+    row.insertCell().textContent = dateStr + (timeStr ? ` at ${timeStr}` : '');
+    
+    // Doctor cell
+    row.insertCell().textContent = doctorName;
+    
+    // Service cell
+    row.insertCell().textContent = serviceName;
+    
+    // Status cell
+    const statusCell = row.insertCell();
+    statusCell.innerHTML = `<span style="color: ${statusColors[status] || '#000'}; font-weight: bold;">${status.toUpperCase()}</span>`;
+    
+    // Actions cell
+    const actionsCell = row.insertCell();
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'action-buttons';
+    
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-edit';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => openEditModal(appointment);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-delete';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = () => deleteAppointment(appointment._id);
+    
+    actionsDiv.appendChild(editBtn);
+    actionsDiv.appendChild(deleteBtn);
+    actionsCell.appendChild(actionsDiv);
+  });
+}
+
+// Load doctors and services for edit form
+async function loadDoctorsAndServices() {
+  try {
+    const [doctorsRes, servicesRes] = await Promise.all([
+      fetch(`${API_URL}/doctors`),
+      fetch(`${API_URL}/services`)
+    ]);
+    
+    const doctorsResult = await doctorsRes.json();
+    const servicesResult = await servicesRes.json();
+    
+    if (doctorsResult.success) {
+      doctorsData = doctorsResult.data.doctors;
+    }
+    if (servicesResult.success) {
+      servicesData = servicesResult.data.services;
+    }
+  } catch (error) {
+    console.error('Error loading doctors/services:', error);
+  }
+}
+
+// Open edit modal
+function openEditModal(appointment) {
+  currentAppointmentId = appointment._id;
+  const modal = document.getElementById('editModal');
+  
+  // Set form values
+  const date = new Date(appointment.date);
+  document.getElementById('editDate').value = date.toISOString().split('T')[0];
+  document.getElementById('editTime').value = appointment.time || '';
+  document.getElementById('editStatus').value = appointment.status || 'pending';
+  document.getElementById('editNotes').value = appointment.notes || '';
+  
+  // Populate doctor dropdown
+  const doctorSelect = document.getElementById('editDoctor');
+  doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+  doctorsData.forEach(doc => {
+    const option = document.createElement('option');
+    option.value = doc._id;
+    option.textContent = doc.name;
+    if (appointment.doctor && (appointment.doctor._id === doc._id || appointment.doctor === doc._id)) {
+      option.selected = true;
+    }
+    doctorSelect.appendChild(option);
+  });
+  
+  // Populate service dropdown
+  const serviceSelect = document.getElementById('editService');
+  serviceSelect.innerHTML = '<option value="">Select Service (Optional)</option>';
+  servicesData.forEach(service => {
+    const option = document.createElement('option');
+    option.value = service._id;
+    option.textContent = service.name;
+    if (appointment.service && (appointment.service._id === service._id || appointment.service === service._id)) {
+      option.selected = true;
+    }
+    serviceSelect.appendChild(option);
+  });
+  
+  // Update time options based on selected doctor
+  updateTimeOptions(appointment.doctor ? (appointment.doctor._id || appointment.doctor) : null);
+  
+  doctorSelect.addEventListener('change', function() {
+    updateTimeOptions(this.value);
+  });
+  
+  modal.style.display = 'block';
+}
+
+// Update time options based on doctor
+function updateTimeOptions(doctorId) {
+  const timeSelect = document.getElementById('editTime');
+  const currentTime = timeSelect.value;
+  
+  if (doctorId && doctorsData.length > 0) {
+    const doctor = doctorsData.find(d => d._id === doctorId);
+    if (doctor && doctor.availableTimes) {
+      timeSelect.innerHTML = '<option value="">Select Time</option>';
+      doctor.availableTimes.forEach(time => {
+        const option = document.createElement('option');
+        option.value = time;
+        option.textContent = time;
+        if (time === currentTime) {
+          option.selected = true;
+        }
+        timeSelect.appendChild(option);
+      });
+    }
+  }
+}
+
+// Close edit modal
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  currentAppointmentId = null;
+  document.getElementById('editForm').reset();
+}
+
+// Handle edit form submission
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  if (!currentToken || !currentAppointmentId) {
+    alert('Please login first');
+    return;
+  }
+  
+  const updateData = {
+    date: document.getElementById('editDate').value,
+    time: document.getElementById('editTime').value,
+    doctor: document.getElementById('editDoctor').value,
+    status: document.getElementById('editStatus').value,
+    notes: document.getElementById('editNotes').value
+  };
+  
+  const serviceId = document.getElementById('editService').value;
+  if (serviceId) {
+    updateData.service = serviceId;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/appointments/${currentAppointmentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentToken}`
+      },
+      body: JSON.stringify(updateData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Appointment updated successfully!');
+      closeEditModal();
+      // Reload history
+      loadPatientHistory(currentToken, currentUserId);
+    } else {
+      alert('Error: ' + (result.message || 'Failed to update appointment'));
+    }
+  } catch (error) {
+    console.error('Update error:', error);
+    alert('Error updating appointment. Please try again.');
+  }
+});
+
+// Delete appointment
+async function deleteAppointment(appointmentId) {
+  if (!currentToken) {
+    alert('Please login first');
+    return;
+  }
+  
+  if (!confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${currentToken}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Appointment deleted successfully!');
+      // Reload history
+      loadPatientHistory(currentToken, currentUserId);
+    } else {
+      alert('Error: ' + (result.message || 'Failed to delete appointment'));
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    alert('Error deleting appointment. Please try again.');
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('editModal');
+  if (event.target === modal) {
+    closeEditModal();
   }
 }
 
 function logout() {
+  currentToken = null;
+  currentUserId = null;
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userId');
   document.getElementById("history-section").classList.add("hidden");
   document.querySelector(".history-login-box").classList.remove("hidden");
+  document.getElementById("username").value = '';
+  document.getElementById("password").value = '';
+  document.getElementById("error-msg").innerHTML = '';
+  closeEditModal();
 }
 </script>
 <script src="inject-chatbot.js"></script>

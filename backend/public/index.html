@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend API Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .result pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .error {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        .success {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .token-display {
+            background: #1f2937;
+            color: #10b981;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        
+        .endpoints {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .endpoints h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .endpoint-list {
+            list-style: none;
+        }
+        
+        .endpoint-list li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .endpoint-list li strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Backend API Dashboard</h1>
+            <p>Test your RESTful API endpoints</p>
+            <div class="status" id="status">Checking connection...</div>
+        </div>
+        
+        <div class="grid">
+            <!-- Authentication Card -->
+            <div class="card">
+                <h2>🔐 Authentication</h2>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="regName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="regEmail" placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="regPassword" placeholder="password123">
+                </div>
+                <button onclick="register()">Register</button>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Email:</label>
+                    <input type="email" id="loginEmail" placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="loginPassword" placeholder="password123">
+                </div>
+                <button onclick="login()">Login</button>
+                <div id="authResult"></div>
+            </div>
+            
+            <!-- Posts Card -->
+            <div class="card">
+                <h2>📝 Posts</h2>
+                <div class="form-group">
+                    <label>Title:</label>
+                    <input type="text" id="postTitle" placeholder="My Post Title">
+                </div>
+                <div class="form-group">
+                    <label>Content:</label>
+                    <textarea id="postContent" rows="3" placeholder="Post content here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <input type="text" id="postStatus" placeholder="published" value="published">
+                </div>
+                <button onclick="createPost()">Create Post</button>
+                <button onclick="getPosts()" style="margin-top: 10px; background: #10b981;">Get All Posts</button>
+                <div id="postResult"></div>
+            </div>
+            
+            <!-- Users Card -->
+            <div class="card">
+                <h2>👤 Users</h2>
+                <div class="form-group">
+                    <label>User ID:</label>
+                    <input type="text" id="userId" placeholder="Enter user ID">
+                </div>
+                <button onclick="getUser()">Get User</button>
+                <button onclick="getCurrentUser()" style="margin-top: 10px; background: #10b981;">Get Current User</button>
+                <div id="userResult"></div>
+            </div>
+        </div>
+        
+        <div class="endpoints">
+            <h2>📋 Available Endpoints</h2>
+            <ul class="endpoint-list">
+                <li><strong>GET</strong> /api/health - Health check</li>
+                <li><strong>POST</strong> /api/auth/register - Register user</li>
+                <li><strong>POST</strong> /api/auth/login - Login user</li>
+                <li><strong>GET</strong> /api/auth/me - Get current user (requires token)</li>
+                <li><strong>GET</strong> /api/posts - Get all posts</li>
+                <li><strong>POST</strong> /api/posts - Create post (requires token)</li>
+                <li><strong>GET</strong> /api/users/:id - Get user by ID (requires token)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let authToken = localStorage.getItem('authToken') || '';
+        
+        // Check server status on load
+        async function checkStatus() {
+            try {
+                const response = await fetch('http://localhost:3000/api/health');
+                const data = await response.json();
+                document.getElementById('status').textContent = '✓ Server Connected';
+                document.getElementById('status').style.background = '#10b981';
+            } catch (error) {
+                document.getElementById('status').textContent = '✗ Server Not Connected';
+                document.getElementById('status').style.background = '#ef4444';
+            }
+        }
+        
+        // Register user
+        async function register() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await response.json();
+                displayResult('authResult', data, response.ok);
+                if (data.data && data.data.token) {
+                    authToken = data.data.token;
+                    localStorage.setItem('authToken', authToken);
+                }
+            } catch (error) {
+                displayResult('authResult', { error: error.message }, false);
+            }
+        }
+        
+        // Login user
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                displayResult('authResult', data, response.ok);
+                if (data.data && data.data.token) {
+                    authToken = data.data.token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('authResult').innerHTML += 
+                        `<div class="token-display">Token saved: ${authToken.substring(0, 50)}...</div>`;
+                }
+            } catch (error) {
+                displayResult('authResult', { error: error.message }, false);
+            }
+        }
+        
+        // Create post
+        async function createPost() {
+            if (!authToken) {
+                displayResult('postResult', { error: 'Please login first to get a token' }, false);
+                return;
+            }
+            
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const status = document.getElementById('postStatus').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ title, content, status })
+                });
+                const data = await response.json();
+                displayResult('postResult', data, response.ok);
+                if (response.ok) {
+                    document.getElementById('postTitle').value = '';
+                    document.getElementById('postContent').value = '';
+                }
+            } catch (error) {
+                displayResult('postResult', { error: error.message }, false);
+            }
+        }
+        
+        // Get all posts
+        async function getPosts() {
+            try {
+                const response = await fetch(`${API_URL}/posts`);
+                const data = await response.json();
+                displayResult('postResult', data, response.ok);
+            } catch (error) {
+                displayResult('postResult', { error: error.message }, false);
+            }
+        }
+        
+        // Get user by ID
+        async function getUser() {
+            if (!authToken) {
+                displayResult('userResult', { error: 'Please login first to get a token' }, false);
+                return;
+            }
+            
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                displayResult('userResult', { error: 'Please enter a user ID' }, false);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                displayResult('userResult', data, response.ok);
+            } catch (error) {
+                displayResult('userResult', { error: error.message }, false);
+            }
+        }
+        
+        // Get current user
+        async function getCurrentUser() {
+            if (!authToken) {
+                displayResult('userResult', { error: 'Please login first to get a token' }, false);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                displayResult('userResult', data, response.ok);
+            } catch (error) {
+                displayResult('userResult', { error: error.message }, false);
+            }
+        }
+        
+        // Display result
+        function displayResult(elementId, data, success) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${success ? 'success' : 'error'}"><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+        }
+        
+        // Check status on page load
+        checkStatus();
+        
+        // Show token if exists
+        if (authToken) {
+            document.getElementById('authResult').innerHTML = 
+                `<div class="token-display">Token loaded from storage: ${authToken.substring(0, 50)}...</div>`;
+        }
+    </script>
+</body>
+</html>
+

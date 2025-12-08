@@ -127,24 +127,46 @@
 
 <!-- React Script -->
 <script type="text/babel">
+  const API_URL = 'http://localhost:3000/api';
+
   function FeaturedServices() {
-    const services = [
-      {name: "General Checkups", page: "BookingDP.html"},
-      {name: "Teeth Cleaning", page: "BookingDP.html"},
-      {name: "X-rays & Imaging", page: "BookingDP.html"},
-      {name: "Root Canal Treatment", page: "BookingDP.html"},
-      {name: "Cosmetic Dentistry", page: "BookingDP.html"},
-      {name: "Emergency Dental Care", page: "BookingDP.html"}
-    ];
+    const [services, setServices] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+      fetch(`${API_URL}/services`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.success && result.data.services) {
+            setServices(result.data.services);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error loading services:', error);
+          setLoading(false);
+        });
+    }, []);
+
+    if (loading) {
+      return <div style={{textAlign: 'center', padding: '40px'}}>Loading services...</div>;
+    }
+
+    if (services.length === 0) {
+      return <div style={{textAlign: 'center', padding: '40px'}}>No services available.</div>;
+    }
 
     return (
       <div className="interactive-services">
         {services.map(service => (
-          <div className="card" key={service.name}>
+          <div className="card" key={service._id}>
             <h3>{service.name}</h3>
-            <p>Click below to book this service!</p>
-            <button className="service-btn" onClick={() => window.location.href=service.page}>
-              Book Now
+            <p>{service.description || 'Click below to book this service!'}</p>
+            <button 
+              className="service-btn" 
+              onClick={() => window.location.href = service.category === 'Emergency' ? `EmergencyDP.html?service=${service._id}` : `BookingDP.html?service=${service._id}`}
+            >
+              {service.category === 'Emergency' ? 'Emergency' : 'Book Now'}
             </button>
           </div>
         ))}

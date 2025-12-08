@@ -25,32 +25,52 @@
 <section class="services-page">
   <h1>💎 Our Services</h1>
 
-  <div class="interactive-services">
-    <div class="card">
-      <h2>General Checkups</h2>
-      <p>Routine examinations to keep your smile healthy.</p>
-      <a href="booking.html" class="book-btn">Book Now</a>
-    </div>
-
-    <div class="card">
-      <h2>Teeth Cleaning</h2>
-      <p>Deep cleaning to remove plaque and protect gums.</p>
-      <a href="booking.html" class="book-btn">Book Now</a>
-    </div>
-
-    <div class="card">
-      <h2>Cosmetic Dentistry</h2>
-      <p>Whitening, veneers & smile makeovers.</p>
-      <a href="booking.html" class="book-btn">Book Now</a>
-    </div>
-
-    <div class="card">
-      <h2>Emergency Care</h2>
-      <p>Same-day pain relief for urgent cases.</p>
-      <a href="emergency.html" class="book-btn">Emergency</a>
-    </div>
+  <div class="interactive-services" id="services-container">
+    <p style="text-align: center; padding: 40px;">Loading services...</p>
   </div>
 </section>
+
+<script>
+const API_URL = 'http://localhost:3000/api';
+
+async function loadServices() {
+  try {
+    const response = await fetch(`${API_URL}/services`);
+    const result = await response.json();
+    
+    const container = document.getElementById('services-container');
+    
+    if (result.success && result.data.services) {
+      const services = result.data.services;
+      
+      if (services.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 40px;">No services available.</p>';
+        return;
+      }
+      
+      container.innerHTML = services.map(service => `
+        <div class="card">
+          <h2>${service.name}</h2>
+          <p>${service.description || 'Professional dental service'}</p>
+          ${service.category === 'Emergency' 
+            ? `<a href="EmergencyDP.html?service=${service._id}" class="book-btn">Emergency</a>`
+            : `<a href="BookingDP.html?service=${service._id}" class="book-btn">Book Now</a>`
+          }
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = '<p style="text-align: center; padding: 40px;">Error loading services.</p>';
+    }
+  } catch (error) {
+    console.error('Error loading services:', error);
+    document.getElementById('services-container').innerHTML = 
+      '<p style="text-align: center; padding: 40px;">Error loading services. Please refresh the page.</p>';
+  }
+}
+
+// Load services when page loads
+loadServices();
+</script>
 <script src="inject-chatbot.js"></script>
 <!-- Chatbot Widget -->
 <div id="chatbot-icon">💬</div>
