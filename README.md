@@ -97,6 +97,8 @@ backend/
 
 The server will start on `http://localhost:3000` (or the port specified in your `.env` file).
 
+Live App Link: https://joliekhaled.github.io/Milestone_4/
+ But it needs MangoDB and serve initialization. 
 ## API Endpoints
 
 ### Authentication Endpoints
