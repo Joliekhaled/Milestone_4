@@ -26,17 +26,65 @@ const generateToken = (id) => {
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, age, gender } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return next(new AppError('User already exists with this email', 400));
+    // Check if user already exists (include password for comparison)
+    const existingUser = await User.findOne({ email }).select('+password');
+
+    if (existingUser) {
+      if (!password) {
+        return next(
+          new AppError('Account already exists with this email. Please login.', 400)
+        );
+      }
+
+      const isSamePassword = await existingUser.comparePassword(password);
+      if (!isSamePassword) {
+        return next(
+          new AppError(
+            'Account already exists with this email. Please login with your original password.',
+            400
+          )
+        );
+      }
+
+      // Optionally backfill contact info if it was missing before
+      let profileUpdated = false;
+      if (phone && !existingUser.phone) {
+        existingUser.phone = phone;
+        profileUpdated = true;
+      }
+      if (age && !existingUser.age) {
+        existingUser.age = age;
+        profileUpdated = true;
+      }
+      if (gender && !existingUser.gender) {
+        existingUser.gender = gender;
+        profileUpdated = true;
+      }
+      if (profileUpdated) {
+        await existingUser.save();
+      }
+
+      const token = generateToken(existingUser._id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Existing patient recognized. Logged in successfully.',
+        data: {
+          user: {
+            id: existingUser._id,
+            name: existingUser.name,
+            email: existingUser.email,
+            role: existingUser.role,
+            phone: existingUser.phone,
+          },
+          token,
+        },
+      });
     }
 
-    // Create user
-    const { phone, age, gender } = req.body;
-
+    // Create new user
     const user = await User.create({
       name,
       email,
@@ -46,7 +94,6 @@ const register = async (req, res, next) => {
       gender,
     });
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -142,4 +189,3 @@ module.exports = {
   login,
   getMe,
 };
-

@@ -29,7 +29,7 @@ const createAppointment = async (req, res, next) => {
     } = req.body;
 
     // If user is logged in, use their ID, otherwise create appointment without patient ID
-    const patientId = req.user ? req.user.id : null;
+    const patientId = req.user ? req.user.id : (req.body.patient || null);
 
     const appointment = await Appointment.create({
       patient: patientId,
@@ -183,12 +183,16 @@ const updateAppointment = async (req, res, next) => {
     // Check permissions
     if (req.user && req.user.role === 'patient') {
       // If appointment has a patient ID, check if it matches
-      if (appointment.patient && appointment.patient.toString() !== req.user.id) {
+      const appointmentPatientId = appointment.patient
+        ? (appointment.patient._id ? appointment.patient._id.toString() : appointment.patient.toString())
+        : null;
+
+      if (appointmentPatientId && appointmentPatientId !== req.user.id) {
         return next(new AppError('Not authorized to update this appointment', 403));
       }
-      
+
       // If appointment has no patient ID, check if phone/name matches
-      if (!appointment.patient) {
+      if (!appointmentPatientId) {
         const User = require('../models/User');
         const user = await User.findById(req.user.id);
         
@@ -260,12 +264,16 @@ const deleteAppointment = async (req, res, next) => {
     // Check permissions
     if (req.user && req.user.role === 'patient') {
       // If appointment has a patient ID, check if it matches
-      if (appointment.patient && appointment.patient.toString() !== req.user.id) {
+      const appointmentPatientId = appointment.patient
+        ? (appointment.patient._id ? appointment.patient._id.toString() : appointment.patient.toString())
+        : null;
+
+      if (appointmentPatientId && appointmentPatientId !== req.user.id) {
         return next(new AppError('Not authorized to delete this appointment', 403));
       }
-      
+
       // If appointment has no patient ID, check if phone/name matches
-      if (!appointment.patient) {
+      if (!appointmentPatientId) {
         const User = require('../models/User');
         const user = await User.findById(req.user.id);
         
@@ -311,4 +319,3 @@ module.exports = {
   updateAppointment,
   deleteAppointment,
 };
-

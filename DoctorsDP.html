@@ -35,7 +35,39 @@
 <script>
   const e = React.createElement;
   const { useState, useEffect } = React;
-  const API_URL = 'http://localhost:3000/api';
+  const API_URL = (function resolveApiBase() {
+    if (window.API_BASE_URL) {
+      return window.API_BASE_URL.replace(/\/$/, '');
+    }
+    const { protocol, hostname, port, origin } = window.location;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (protocol === 'file:' || !hostname) {
+      return 'http://localhost:3000/api';
+    }
+    if (isLocalhost) {
+      const resolvedPort = port || '3000';
+      return `${protocol}//${hostname}:${resolvedPort}/api`;
+    }
+    return `${origin.replace(/\/$/, '')}/api`;
+  })();
+
+  const defaultDoctorPhoto = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=420&q=80';
+  const doctorPhotos = {
+    'Dr. Ahmed Amer': 'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=420&q=80',
+    'Dr. Sarah Hany': 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=420&q=80',
+    'Dr. Youmna Galeb': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=420&q=80',
+    'Dr. Mai Mansour': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=420&q=80',
+    'Dr. Youssef Kamel': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=420&q=80'
+  };
+  const resolveDoctorImage = (doc) => {
+    if (doc.image && !doc.image.toLowerCase().includes('placehold')) {
+      return doc.image;
+    }
+    if (doc.name && doctorPhotos[doc.name]) {
+      return doctorPhotos[doc.name];
+    }
+    return defaultDoctorPhoto;
+  };
 
   function DoctorsApp() {
     const [doctors, setDoctors] = useState([]);
@@ -80,7 +112,7 @@
     const doctorCards = e("div", {className: "doctor-grid"},
       filteredDoctors.map((doc) =>
         e("div", {key: doc._id, className: "doctor-card"},
-          e("img", {src: doc.image || `https://placehold.co/250x250?text=${doc.name.split(' ')[1]}`, alt: doc.name}),
+          e("img", {src: resolveDoctorImage(doc), alt: doc.name}),
           e("h3", null, doc.name),
           e("p", null, doc.specialty),
           doc.bio ? e("p", {style: {fontSize: "14px", color: "#666", marginTop: "10px"}}, doc.bio) : null

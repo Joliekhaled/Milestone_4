@@ -264,13 +264,27 @@
     </div>
     
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = (function resolveApiBase() {
+            if (window.API_BASE_URL) {
+                return window.API_BASE_URL.replace(/\/$/, '');
+            }
+            const { protocol, hostname, port, origin } = window.location;
+            const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+            if (protocol === 'file:' || !hostname) {
+                return 'http://localhost:3000/api';
+            }
+            if (isLocalhost) {
+                const resolvedPort = port || '3000';
+                return `${protocol}//${hostname}:${resolvedPort}/api`;
+            }
+            return `${origin.replace(/\/$/, '')}/api`;
+        })();
         let authToken = localStorage.getItem('authToken') || '';
         
         // Check server status on load
         async function checkStatus() {
             try {
-                const response = await fetch('http://localhost:3000/api/health');
+                const response = await fetch(`${API_URL}/health`);
                 const data = await response.json();
                 document.getElementById('status').textContent = '✓ Server Connected';
                 document.getElementById('status').style.background = '#10b981';
@@ -428,6 +442,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 

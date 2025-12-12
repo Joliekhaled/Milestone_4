@@ -27,6 +27,8 @@
       width: 90%;
       max-width: 600px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .close {
       color: #aaa;
@@ -38,25 +40,45 @@
     .close:hover {
       color: #000;
     }
-    .modal-content label {
+    #editForm {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #editForm label {
       display: block;
-      margin: 10px 0 5px;
+      font-weight: 600;
       font-weight: bold;
     }
-    .modal-content input,
-    .modal-content select {
+    #editForm input,
+    #editForm select {
       width: 100%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      margin-bottom: 15px;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(16,32,40,0.15);
+      font-size: 0.95rem;
     }
-    .modal-content button {
-      padding: 10px 20px;
-      margin: 5px;
+    #editForm button {
+      padding: 12px 20px;
+      border-radius: 14px;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .modal-save-btn {
+      background: linear-gradient(135deg, #1cbbb4, #3dc5f3);
+      color: white;
+      font-weight: 600;
+    }
+    .modal-cancel-btn {
+      background: #e5e7eb;
+      color: #0f4c5c;
+      font-weight: 600;
     }
     .btn-edit {
       background: #2ec4b6;
@@ -82,6 +104,101 @@
       padding: 5px 15px;
       font-size: 14px;
     }
+    /* History Layout */
+    .history-header {
+      text-align: center;
+      padding: 40px 20px 10px;
+    }
+    .history-header h1 {
+      margin: 0 0 10px;
+      color: #0f4c5c;
+    }
+    .history-header p {
+      margin: 0 auto;
+      color: #5b7281;
+      max-width: 520px;
+    }
+    .history-wrapper {
+      max-width: 960px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+    .history-login-card,
+    .history-results {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(15, 74, 84, 0.08);
+      border: 1px solid rgba(15, 74, 84, 0.06);
+      margin-bottom: 24px;
+    }
+    .history-login-card h2 {
+      margin-top: 0;
+      color: #0f4c5c;
+    }
+    .history-login-card input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 12px;
+      border: 1px solid rgba(16, 32, 40, 0.15);
+      font-size: 1rem;
+    }
+    .history-btn {
+      width: 100%;
+      margin-top: 12px;
+    }
+    .history-info-note {
+      font-size: 0.95rem;
+      color: #5b7281;
+      margin-top: 12px;
+    }
+    .history-results {
+      display: none;
+    }
+    .history-results.active {
+      display: block;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .history-results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      margin-top: 16px;
+    }
+    .history-table th {
+      text-align: left;
+      font-size: 0.85rem;
+      color: #0f4c5c;
+      padding-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .history-table td {
+      background: #f9feff;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(28, 187, 180, 0.08);
+    }
+    .history-table tr:hover td {
+      background: #eefcff;
+    }
+    .logout-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 18px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -98,27 +215,29 @@
   </ul>
 </nav>
 
-<div class="history-container">
+<section class="history-header">
+  <h1>Your Patient Profile</h1>
+  <p>Log in to review, update, or cancel upcoming visits. We keep your treatment history secure and accessible.</p>
+</section>
 
-  <h1>Your Patient Profile </h1>
-  <p class="subtitle">Log in to securely view your treatment history & appointments.</p>
-
-  <!-- LOGIN BOX -->
-  <div class="history-login-box">
+<div class="history-wrapper">
+  <div class="history-login-card">
     <h2>Login to Continue</h2>
-
     <input type="text" id="username" placeholder="Enter Username">
     <input type="password" id="password" placeholder="Enter Password">
-
-    <button class="history-btn" onclick="login()">View My History </button>
-
+    <button class="history-btn" onclick="login()">View My History</button>
     <p id="error-msg"></p>
+    <p class="history-info-note">Forgot your password? Contact the clinic and we’ll reset it instantly.</p>
   </div>
 
-  <!-- HIDDEN HISTORY SECTION -->
-  <div id="history-section" class="hidden">
-    <h2> Your Past Appointments</h2>
-
+  <div id="history-section" class="history-results">
+    <div class="history-results-head">
+      <div>
+        <h2>Your Appointments</h2>
+        <p class="timeline-hint">Appointments booked with this account appear below.</p>
+      </div>
+      <button class="logout-btn" type="button" onclick="logout()">Log Out</button>
+    </div>
     <table class="history-table">
       <tr>
         <th>Date</th>
@@ -127,28 +246,7 @@
         <th>Status</th>
         <th>Actions</th>
       </tr>
-      <tr>
-        <td>Jan 14, 2025</td>
-        <td>Dr. Sarah Hany</td>
-        <td>Teeth Cleaning</td>
-        <td>Follow-up recommended in 6 months</td>
-      </tr>
-      <tr>
-        <td>Feb 2, 2025</td>
-        <td>Dr. Ahmed Amer</td>
-        <td>Root Canal</td>
-        <td>Procedure successful</td>
-      </tr>
-      <tr>
-        <td>Mar 3, 2025</td>
-        <td>Dr. Youmna Galeb</td>
-        <td>Pediatric Checkup</td>
-        <td>All good </td>
-      </tr>
     </table>
-
-    <br>
-    <button class="logout-btn" onclick="logout()">Log Out </button>
   </div>
 
   <!-- Edit Appointment Modal -->
@@ -186,9 +284,9 @@
         <label for="editNotes">Notes:</label>
         <input type="text" id="editNotes" placeholder="Optional notes">
 
-        <div style="margin-top: 20px;">
-          <button type="submit" class="btn-save">Save Changes</button>
-          <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <div class="modal-actions">
+          <button type="button" class="modal-cancel-btn" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="modal-save-btn">Save Changes</button>
         </div>
       </form>
     </div>
@@ -198,23 +296,39 @@
 
 
 <script>
-const API_URL = 'http://localhost:3000/api';
+const API_URL = (function resolveApiBase() {
+  if (window.API_BASE_URL) {
+    return window.API_BASE_URL.replace(/\/$/, '');
+  }
+  const { protocol, hostname, port, origin } = window.location;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (protocol === 'file:' || !hostname) {
+    return 'http://localhost:3000/api';
+  }
+  if (isLocalhost) {
+    const resolvedPort = port || '3000';
+    return `${protocol}//${hostname}:${resolvedPort}/api`;
+  }
+  return `${origin.replace(/\/$/, '')}/api`;
+})();
 let currentToken = null;
 let currentUserId = null;
 let doctorsData = [];
 let servicesData = [];
 let currentAppointmentId = null;
 
-// Check if user is already logged in
+const loginBox = document.querySelector('.history-login-card');
+const historySection = document.getElementById('history-section');
+
 window.addEventListener('DOMContentLoaded', function() {
-  const token = localStorage.getItem('authToken');
-  currentToken = token;
-  if (token) {
-    // Try to get current user and load history
-    loadPatientHistory(token);
-  }
-  // Load doctors and services for edit form
   loadDoctorsAndServices();
+  const storedToken = localStorage.getItem('authToken');
+  const storedUserId = localStorage.getItem('userId');
+  if (storedToken && storedUserId) {
+    currentToken = storedToken;
+    currentUserId = storedUserId;
+    loadPatientHistory(storedToken, storedUserId);
+  }
 });
 
 async function login() {
@@ -245,10 +359,11 @@ async function login() {
       currentUserId = result.data.user.id;
       localStorage.setItem('authToken', currentToken);
       localStorage.setItem('userId', currentUserId);
+      localStorage.removeItem('userName');
       
       // Hide login box and show history
-      document.querySelector(".history-login-box").classList.add("hidden");
-      document.getElementById("history-section").classList.remove("hidden");
+      loginBox.classList.add("hidden");
+      historySection.classList.add("active");
       
       // Load patient history
       loadPatientHistory(currentToken, currentUserId);
@@ -271,6 +386,8 @@ async function loadPatientHistory(token, userId = null) {
       const userData = await userResponse.json();
       if (userData.success) {
         userId = userData.data.user.id;
+        localStorage.setItem('userId', userId);
+        localStorage.removeItem('userName');
       }
     } catch (error) {
       console.error('Error getting user:', error);
@@ -294,8 +411,8 @@ async function loadPatientHistory(token, userId = null) {
       displayAppointments(result.data.appointments);
       
       // Show history section
-      document.querySelector(".history-login-box").classList.add("hidden");
-      document.getElementById("history-section").classList.remove("hidden");
+      loginBox.classList.add("hidden");
+      historySection.classList.add("active");
     } else {
       document.getElementById("error-msg").innerHTML = result.message || "Error loading history.";
     }
@@ -587,16 +704,20 @@ window.onclick = function(event) {
   }
 }
 
-function logout() {
+function logout(silent = false) {
   currentToken = null;
   currentUserId = null;
   localStorage.removeItem('authToken');
   localStorage.removeItem('userId');
-  document.getElementById("history-section").classList.add("hidden");
-  document.querySelector(".history-login-box").classList.remove("hidden");
+  historySection.classList.remove("active");
+  loginBox.classList.remove("hidden");
   document.getElementById("username").value = '';
   document.getElementById("password").value = '';
-  document.getElementById("error-msg").innerHTML = '';
+  if (!silent) {
+    document.getElementById("error-msg").innerHTML = 'You have been logged out.';
+  } else {
+    document.getElementById("error-msg").innerHTML = '';
+  }
   closeEditModal();
 }
 </script>

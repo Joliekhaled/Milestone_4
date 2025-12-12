@@ -7,58 +7,72 @@
   <title>Book Appointment - Smile Dental Clinic</title>
   <link rel="stylesheet" href="DentalProject.css">
   <style>
-    /* Booking Form Styles */
     .booking-section {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #e8faff;
-      padding: 30px;
-      border-radius: 25px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-      font-family: Arial, sans-serif;
+      backdrop-filter: blur(18px);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(28, 187, 180, 0.12);
+      position: relative;
+    }
+    .booking-section::after {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border-radius: 24px;
+      border: 1px dashed rgba(16, 32, 40, 0.06);
+      pointer-events: none;
     }
     .booking-section h2 {
-      text-align: center;
-      color: #2ec4b6;
-      margin-bottom: 20px;
+      font-size: clamp(26px, 4vw, 34px);
+      letter-spacing: -0.5px;
     }
     .booking-section label {
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: bold;
+      font-size: 0.95rem;
+      color: #1b3440;
     }
-    .booking-section input, .booking-section select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 15px;
-      font-size: 16px;
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .form-grid > div {
+      display: flex;
+      flex-direction: column;
+    }
+    .booking-section select:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .booking-section select.disabled-select {
+      background: rgba(233, 247, 255, 0.6);
     }
     .booking-section input[type="checkbox"] {
       width: auto;
-      margin-right: 10px;
+      accent-color: #1cbbb4;
     }
-    .booking-section button {
-      width: 100%;
-      padding: 15px;
-      font-size: 18px;
-      background: linear-gradient(135deg, #7ddfff, #2ec4b6);
-      color: white;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
+    #selectedService {
+      background: linear-gradient(120deg, rgba(28,187,180,0.12), rgba(125,211,252,0.2));
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(28, 187, 180, 0.18);
+      color: #0f4c5c;
+      font-weight: 600;
     }
-    .booking-section button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    #loginInfo {
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(28, 187, 180, 0.18);
+      background: rgba(233, 247, 255, 0.5);
     }
     #successMsg {
-      text-align: center;
-      margin-top: 15px;
-      font-weight: bold;
-      color: green;
+      min-height: 40px;
+      white-space: pre-line;
+    }
+    @media (max-width: 600px) {
+      .booking-section::after {
+        inset: 8px;
+      }
     }
   </style>
 </head>
@@ -79,41 +93,56 @@
 <section class="booking-section">
   <h2>Book Your Appointment </h2>
 
-  <div id="selectedService" style="background: #d1fae5; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+  <div id="selectedService" style="display: none;">
     <strong>Selected Service:</strong> <span id="serviceName">-</span>
   </div>
 
-  <label for="date">Select Date :</label>
-  <input type="date" id="date" required>
+  <div class="form-grid">
+    <div>
+      <label for="date">Select Date :</label>
+      <input type="date" id="date" required>
+    </div>
+    <div>
+      <label for="time">Select Time :</label>
+      <select id="time" required>
+        <option disabled selected>Select Time</option>
+      </select>
+    </div>
+  </div>
 
-  <label for="service">Select Service :</label>
-  <select id="service" required>
-    <option disabled selected>Select Service</option>
-  </select>
-
-  <label for="doctor">Select Doctor :</label>
-  <select id="doctor" required>
-    <option disabled selected>Select Doctor</option>
-    <option>Dr. Ahmed Amer</option>
-    <option>Dr. Sarah Hany</option>
-    <option>Dr. Youmna Galeb</option>
-    <option>Dr. Mai Mansour</option>
-    <option>Dr. Youssef Kamel</option>
-  </select>
-
-  <label for="time">Select Time :</label>
-  <select id="time" required>
-    <option disabled selected>Select Time</option>
-  </select>
+  <div class="form-grid">
+    <div>
+      <label for="service">Select Service :</label>
+      <select id="service" required>
+        <option disabled selected>Select Service</option>
+      </select>
+    </div>
+    <div>
+      <label for="doctor">Select Doctor :</label>
+      <select id="doctor" required>
+        <option disabled selected>Select Doctor</option>
+        <option>Dr. Ahmed Amer</option>
+        <option>Dr. Sarah Hany</option>
+        <option>Dr. Youmna Galeb</option>
+        <option>Dr. Mai Mansour</option>
+        <option>Dr. Youssef Kamel</option>
+      </select>
+    </div>
+  </div>
 
   <label for="name">Full Name:</label>
   <input type="text" id="name" placeholder="John Doe" required>
 
-  <label for="phone">Phone Number:</label>
-  <input type="tel" id="phone" placeholder="010XXXXXXXX" required>
-
-  <label for="age">Age:</label>
-  <input type="number" id="age" placeholder="25" required>
+  <div class="form-grid">
+    <div>
+      <label for="phone">Phone Number:</label>
+      <input type="tel" id="phone" placeholder="010XXXXXXXX" required>
+    </div>
+    <div>
+      <label for="age">Age:</label>
+      <input type="number" id="age" placeholder="25" required>
+    </div>
+  </div>
 
   <label for="gender">Gender:</label>
   <select id="gender" required>
@@ -123,7 +152,10 @@
     <option>Other</option>
   </select>
 
-  <label><input type="checkbox" id="consent"> I want to create a clinic history </label>
+  <label class="consent-box">
+    <input type="checkbox" id="consent">
+    I want to create a clinic history 
+  </label>
 
   <div id="loginInfo" style="display:none;">
     <label for="username">Choose Username:</label>
@@ -137,7 +169,21 @@
 </section>
 
 <script>
-const API_URL = 'http://localhost:3000/api';
+const API_URL = (function resolveApiBase() {
+  if (window.API_BASE_URL) {
+    return window.API_BASE_URL.replace(/\/$/, '');
+  }
+  const { protocol, hostname, port, origin } = window.location;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (protocol === 'file:' || !hostname) {
+    return 'http://localhost:3000/api';
+  }
+  if (isLocalhost) {
+    const resolvedPort = port || '3000';
+    return `${protocol}//${hostname}:${resolvedPort}/api`;
+  }
+  return `${origin.replace(/\/$/, '')}/api`;
+})();
 let doctorsData = [];
 let doctorTimes = {};
 let selectedServiceId = null;
@@ -153,6 +199,35 @@ const successMsg = document.getElementById("successMsg");
 const selectedServiceDiv = document.getElementById("selectedService");
 const serviceNameSpan = document.getElementById("serviceName");
 let servicesData = [];
+const disableTimeSelect = (placeholder = 'Select Time') => {
+  timeSelect.innerHTML = `<option disabled selected>${placeholder}</option>`;
+  timeSelect.disabled = true;
+  timeSelect.classList.add('disabled-select');
+};
+const enableTimeSelect = () => {
+  timeSelect.disabled = false;
+  timeSelect.classList.remove('disabled-select');
+};
+disableTimeSelect('Select a doctor first');
+
+async function loginExistingAccount(email, password) {
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json();
+    if (response.ok && data.success && data.data && data.data.token) {
+      localStorage.setItem('authToken', data.data.token);
+      localStorage.setItem('userId', data.data.user.id);
+      return { userId: data.data.user.id, token: data.data.token };
+    }
+  } catch (error) {
+    console.error('Existing account login failed:', error);
+  }
+  return null;
+}
 
 // Get service ID from URL parameter
 function getUrlParameter(name) {
@@ -257,8 +332,17 @@ async function loadDoctors() {
 // Update times dynamically when doctor changes
 doctorSelect.addEventListener("change", function() {
   const doctorId = doctorSelect.value;
+  if (!doctorId) {
+    disableTimeSelect('Select a doctor first');
+    return;
+  }
   const times = doctorTimes[doctorId] || [];
+  if (!times.length) {
+    disableTimeSelect('No available slots');
+    return;
+  }
   
+  enableTimeSelect();
   timeSelect.innerHTML = '<option disabled selected>Select Time</option>';
   times.forEach(time => {
     const option = document.createElement("option");
@@ -295,10 +379,15 @@ bookBtn.addEventListener("click", async function() {
   if(consentCheckbox.checked) {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
-    const email = username + '@smileclinic.com'; // Use username as email base
+    const email = username.includes('@') ? username : `${username}@smileclinic.com`;
     
     if(!username || !password) {
       alert("Please create a username and password for your clinic history.");
+      return;
+    }
+    if (password.length < 6) {
+      successMsg.textContent = '⚠️ Password must be at least 6 characters.';
+      successMsg.style.color = 'orange';
       return;
     }
 
@@ -333,10 +422,16 @@ bookBtn.addEventListener("click", async function() {
         successMsg.textContent = `✅ Account created! Username: ${username}\nNow booking your appointment...`;
         successMsg.style.color = 'green';
       } else {
-        // Show registration error
-        successMsg.textContent = `⚠️ Account creation failed: ${registerData.message || 'Unknown error'}\nBooking appointment without account...`;
-        successMsg.style.color = 'orange';
-        // Continue with booking anyway
+        let fallbackLoginResult = await loginExistingAccount(email, password);
+        if (fallbackLoginResult) {
+          patientId = fallbackLoginResult.userId;
+          successMsg.textContent = `ℹ️ Account already exists. Logged in as ${username}.\nProceeding to book your appointment...`;
+          successMsg.style.color = 'green';
+        } else {
+          const failureReason = registerData.message || 'Unknown error';
+          successMsg.textContent = `⚠️ Account creation failed: ${failureReason}\nBooking appointment without account...`;
+          successMsg.style.color = 'orange';
+        }
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -374,9 +469,15 @@ bookBtn.addEventListener("click", async function() {
     }
     // If no patientId, appointment will be created without patient account (patient field will be undefined/null)
 
+    const headers = { 'Content-Type': 'application/json' };
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     const response = await fetch(`${API_URL}/appointments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(appointmentData)
     });
 
@@ -404,7 +505,7 @@ bookBtn.addEventListener("click", async function() {
       document.getElementById("password").value = '';
       doctorSelect.selectedIndex = 0;
       serviceSelect.selectedIndex = 0;
-      timeSelect.innerHTML = '<option disabled selected>Select Time</option>';
+      disableTimeSelect('Select a doctor first');
       document.getElementById("gender").selectedIndex = 0;
       consentCheckbox.checked = false;
       loginInfo.style.display = 'none';

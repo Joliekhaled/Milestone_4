@@ -190,16 +190,40 @@ const getPatientHistory = async (req, res, next) => {
       return next(new AppError('Not authorized to view this history', 403));
     }
 
-    // Get user info to match by phone/name as well
+    // Ensure user exists
     const user = await User.findById(userId);
-    
-    // Find appointments by patient ID OR by phone/name (for appointments made without account)
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    // Build conditions to include appointments linked to the account
+    // plus legacy bookings that used the same name/phone and no patient id
+    const legacyConditions = [];
+    const noLinkedPatient = { $or: [{ patient: null }, { patient: { $exists: false } }] };
+
+    if (user.phone) {
+      legacyConditions.push({
+        $and: [
+          noLinkedPatient,
+          { patientPhone: user.phone },
+        ],
+      });
+    }
+
+    if (user.name) {
+      legacyConditions.push({
+        $and: [
+          noLinkedPatient,
+          { patientName: user.name },
+        ],
+      });
+    }
+
     const query = {
       $or: [
         { patient: userId },
-        ...(user && user.phone ? [{ patientPhone: user.phone }] : []),
-        ...(user && user.name ? [{ patientName: user.name }] : [])
-      ]
+        ...legacyConditions,
+      ],
     };
 
     const appointments = await Appointment.find(query)
@@ -225,4 +249,3 @@ module.exports = {
   deleteUser,
   getPatientHistory,
 };
-

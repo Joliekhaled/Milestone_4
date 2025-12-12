@@ -106,12 +106,15 @@ Your Smile Dental Clinic frontend is now fully connected to the backend API.
 
 ## Notes
 
-- All API calls use `http://localhost:3000/api` - update this if deploying
+- API calls now auto-detect the correct base URL (falls back to `http://localhost:3000/api` locally).  
+  Set `window.API_BASE_URL` in any page before other scripts load if you want to point to a different backend host.
 - Authentication tokens are stored in localStorage
 - Patient accounts are created with email format: `username@smileclinic.com`
 - Emergency appointments are automatically assigned to first available doctor
 
 Your dental clinic application is now fully functional with a connected backend! 🎉
+
+
 
 
 
